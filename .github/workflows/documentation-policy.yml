@@ -1,0 +1,18 @@
+name: documentation-policy
+on:
+  pull_request:
+    branches: [main]
+jobs:
+  documentation-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require synchronized release files
+        shell: bash
+        run: |
+          changed="$(git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}")"
+          for file in pom.xml README.md CHANGELOG.md; do
+            grep -qx "$file" <<< "$changed" || { echo "$file must change"; exit 1; }
+          done
