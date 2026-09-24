@@ -33,17 +33,17 @@ public class PointByPointPublishService {
     public void publishFile(String eventId, String filePath, Long expectedRowsHint) {
         PointByPointKey key = mapper.key(eventId);
         Path path = Path.of(filePath);
-        boolean started = false;
-        long expectedRows = expectedRowsHint == null ? -1L : expectedRowsHint;
+        Long validatedExpectedRows = null;
         try {
             Validation validation = validate(path);
-            expectedRows = validation.rows();
-            if (expectedRowsHint != null && expectedRowsHint != expectedRows) {
+            final long expectedRows = validation.rows();
+            validatedExpectedRows = expectedRows;
+
+            if (expectedRowsHint != null && expectedRowsHint.longValue() != expectedRows) {
                 throw new IllegalStateException("CSV has " + expectedRows + " rows; expected " + expectedRowsHint);
             }
 
             send(key, mapper.control(eventId, "START", filePath, expectedRows, validation.matchId(), null));
-            started = true;
 
             AtomicLong rowNumber = new AtomicLong();
             parser.parseInChunks(path, CHUNK_SIZE, rows -> rows.forEach(row ->
@@ -51,14 +51,16 @@ public class PointByPointPublishService {
 
             send(key, mapper.control(eventId, "COMPLETED", filePath, expectedRows, validation.matchId(), null));
         } catch (Exception exception) {
-            String message = exception.getMessage() == null ? exception.getClass().getSimpleName() : exception.getMessage();
-            long safeExpected = Math.max(0L, expectedRows);
+            String message = exception.getMessage() == null
+                    ? exception.getClass().getSimpleName()
+                    : exception.getMessage();
+            long safeExpected = validatedExpectedRows == null
+                    ? Math.max(0L, expectedRowsHint == null ? 0L : expectedRowsHint)
+                    : validatedExpectedRows;
             try {
                 send(key, mapper.control(eventId, "FAILED", filePath, safeExpected, null, message));
             } catch (Exception ignored) {
-                if (started) {
-                    // Preserve the original failure if Kafka is also unavailable while reporting it.
-                }
+                // Preserve the original parsing/validation failure if reporting it also fails.
             }
             throw new IllegalStateException("Unable to parse POINT_BY_POINT CSV: " + filePath, exception);
         }
