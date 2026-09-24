@@ -1,0 +1,32 @@
+name: cleanup-merged-branch
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [ main ]
+
+permissions:
+  contents: write
+
+jobs:
+  delete-head-branch:
+    if: >
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref != 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete merged head branch
+        uses: actions/github-script@v9
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        with:
+          script: |
+            const ref = `heads/${process.env.HEAD_REF}`;
+            try {
+              await github.rest.git.deleteRef({ owner: context.repo.owner, repo: context.repo.repo, ref });
+              core.info(`Deleted ${ref}`);
+            } catch (error) {
+              if (error.status === 404 || error.status === 422) return;
+              throw error;
+            }

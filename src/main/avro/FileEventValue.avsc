@@ -1,0 +1,10 @@
+{
+  "namespace":"com.example.csvwatcher.watcher",
+  "type":"record",
+  "name":"FileEventValue",
+  "fields":[
+    {"name":"fileType","type":"string"},
+    {"name":"filePath","type":"string"},
+    {"name":"expectedRows","type":["null","long"],"default":null}
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "namespace":"com.example.csvpointbypoint.avro",
+  "type":"record",
+  "name":"PointByPointValue",
+  "fields":[
+    {"name":"sourceEventId","type":"string"},
+    {"name":"eventType","type":"string"},
+    {"name":"filePath","type":"string"},
+    {"name":"expectedRows","type":"long"},
+    {"name":"rowNumber","type":"long","default":0},
+    {"name":"matchId","type":["null","string"],"default":null},
+    {"name":"recordType","type":["null","string"],"default":null},
+    {"name":"quarter","type":["null","string"],"default":null},
+    {"name":"sequence","type":["null","int"],"default":null},
+    {"name":"homeScore","type":["null","int"],"default":null},
+    {"name":"awayScore","type":["null","int"],"default":null},
+    {"name":"homePointsAdded","type":["null","int"],"default":null},
+    {"name":"awayPointsAdded","type":["null","int"],"default":null},
+    {"name":"leaderSide","type":["null","string"],"default":null},
+    {"name":"advantage","type":["null","string"],"default":null},
+    {"name":"advantageDirection","type":["null","string"],"default":null},
+    {"name":"homeIsWinning","type":["null","boolean"],"default":null},
+    {"name":"awayIsWinning","type":["null","boolean"],"default":null},
+    {"name":"error","type":["null","string"],"default":null}
+  ]
+}
