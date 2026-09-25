@@ -16,7 +16,7 @@ Antes de publicar ninguna fila hace una pasada completa de validación. Después
 `FileEventKey`, `FileEventValue`, `PointByPointKey` y `PointByPointValue` se consumen desde:
 
 ```text
-com.fernandez.basketball:basketball-event-contracts:1.0.2
+com.fernandez.basketball:basketball-event-contracts:1.1.0
 ```
 
 Este repositorio ya no mantiene copias locales de esos schemas ni genera las clases Avro durante su propia build. Fuera de GitHub Actions, Maven necesita credenciales con `read:packages` para resolver el artefacto desde GitHub Packages.
