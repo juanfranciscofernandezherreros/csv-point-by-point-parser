@@ -1,4 +1,4 @@
-![version](https://img.shields.io/badge/version-2.0.6-blue)
+![version](https://img.shields.io/badge/version-2.0.7-blue)
 # csv-point-by-point-parser
 
 Parser separado de `csv-point-by-point`.
@@ -10,6 +10,16 @@ file.ready.point-by-point -> validación completa CSV -> START/ROW/COMPLETED|FAI
 El parser conserva las reglas del micro original: UTF-8/BOM, 13 columnas de datos, `link_url` y `source_url` opcionales, un único `match_id` por fichero y validación de `expectedRows`.
 
 Antes de publicar ninguna fila hace una pasada completa de validación. Después publica todos los mensajes con la misma key Avro `sourceEventId`, preservando el orden por partición. No usa JPA, Flyway ni PostgreSQL.
+
+## Contratos Avro compartidos
+
+`FileEventKey`, `FileEventValue`, `PointByPointKey` y `PointByPointValue` se consumen desde:
+
+```text
+com.fernandez.basketball:basketball-event-contracts:1.1.0
+```
+
+Este repositorio ya no mantiene copias locales de esos schemas ni genera las clases Avro durante su propia build. Fuera de GitHub Actions, Maven necesita credenciales con `read:packages` para resolver el artefacto desde GitHub Packages.
 
 Variables: `KAFKA_BOOTSTRAP_SERVERS`, `KAFKA_SCHEMA_REGISTRY_URL`, `KAFKA_FILE_READY_TOPIC`, `KAFKA_PARSED_POINT_BY_POINT_TOPIC`, `CSV_ALLOWED_ROOT`.
 

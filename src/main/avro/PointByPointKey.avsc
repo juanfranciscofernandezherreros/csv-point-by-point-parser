@@ -1,6 +1,0 @@
-{
-  "namespace":"com.example.csvpointbypoint.avro",
-  "type":"record",
-  "name":"PointByPointKey",
-  "fields":[{"name":"sourceEventId","type":"string"}]
-}
