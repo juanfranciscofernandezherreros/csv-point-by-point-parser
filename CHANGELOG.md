@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.7 - 2026-09-25
+
+- [patch] KAN-84 sustituye los schemas locales FileEvent/PointByPoint por `basketball-event-contracts:1.0.2`.
+- [patch] Elimina generación Avro local y configura Maven/CI con lectura autenticada de GitHub Packages.
+- [patch] Mantiene los namespaces, campos y protocolo START/ROW/COMPLETED/FAILED existentes.
+
 ## 2.0.6 - 2026-09-25
 
 - [patch] KAN-70 valida POINT_BY_POINT contra `CSV_ALLOWED_ROOT` antes de cualquier lectura.
