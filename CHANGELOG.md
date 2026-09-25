@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.3
+
+- [patch] Estandariza la automatización del repositorio con el flujo autónomo de csv-results-parser.
+
 ## 2.0.2 - 2026-09-25
 
 - [patch] Exige confirmar rama y nivel SemVer antes de cualquier cambio.
