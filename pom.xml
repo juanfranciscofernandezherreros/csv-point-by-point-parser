@@ -3,8 +3,11 @@
  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
  <modelVersion>4.0.0</modelVersion>
  <parent><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-parent</artifactId><version>3.1.12</version><relativePath/></parent>
- <groupId>com.example</groupId><artifactId>csv-point-by-point-parser</artifactId><version>2.0.0</version>
- <properties><java.version>21</java.version><avro.version>1.11.1</avro.version><confluent.version>7.5.0</confluent.version></properties>
+ <groupId>com.example</groupId><artifactId>csv-point-by-point-parser</artifactId><version>${revision}${sha1}${changelist}</version>
+ <properties>
+    <revision>2.0.1</revision>
+    <sha1></sha1>
+    <changelist></changelist><java.version>21</java.version><avro.version>1.11.1</avro.version><confluent.version>7.5.0</confluent.version></properties>
  <dependencies>
   <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter</artifactId></dependency>
   <dependency><groupId>org.springframework.kafka</groupId><artifactId>spring-kafka</artifactId></dependency>
