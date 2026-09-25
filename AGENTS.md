@@ -2,38 +2,47 @@
 
 Estas reglas son obligatorias para cualquier agente, asistente o automatización que modifique este repositorio.
 
-## Confirmación obligatoria antes de empezar
+## Pre-flight obligatorio
 
-Antes de realizar cualquier cambio, el agente debe preguntar al usuario y esperar respuesta explícita sobre:
+La **primera operación de lectura del repositorio en cada tarea o sesión** debe ser abrir y leer completamente este `AGENTS.md` desde la rama por defecto. Si este archivo referencia otras reglas, deben leerse antes de cualquier escritura.
 
-1. **Nombre de la rama**, proponiendo uno por defecto.
-2. **Tipo SemVer** del cambio: `major`, `minor` o `patch`.
+No cuenta haber leído estas reglas en otra conversación, sesión o tarea. No se debe confiar en memoria previa.
 
-No se debe modificar ningún archivo, crear commits ni abrir una Pull Request hasta disponer de ambas respuestas. Estas son las únicas confirmaciones que el agente debe solicitar al usuario durante el trabajo.
+**Está prohibida cualquier operación de escritura antes de completar este pre-flight.**
 
-## Flujo de trabajo automático
+## Autonomía sin bloqueos innecesarios
 
-Una vez confirmados la rama y el nivel SemVer, esa confirmación autoriza el ciclo completo del trabajo. A partir de ese momento, el agente debe continuar de forma autónoma y no debe solicitar ninguna autorización o confirmación adicional para cambios, commits, push, tests, correcciones, actualización de la PR, reejecución de checks, merge, eliminación de la rama o verificación final.
+Una vez leído `AGENTS.md`, el agente debe continuar de forma autónoma. No debe pedir confirmación de nombre de rama, nivel SemVer, commits, push, tests, correcciones, actualización de PR, merge, eliminación de rama ni verificación final, salvo que el usuario haya pedido explícitamente participar en alguna de esas decisiones.
 
-El ciclo obligatorio es:
+El agente debe:
+1. elegir un nombre de rama descriptivo;
+2. determinar de forma razonada el nivel SemVer (`major`, `minor` o `patch`) según el impacto real;
+3. documentar esas decisiones en la Pull Request.
 
-1. Partir del `main` actualizado.
-2. Confirmar nombre de rama.
-3. Confirmar `major`, `minor` o `patch`.
-4. Crear la rama dedicada; no hacer commits ni push directamente a `main`.
-5. Aplicar el incremento SemVer sobre `revision`.
-6. Realizar el cambio.
-7. Actualizar `CHANGELOG.md` con la nueva versión funcional.
-8. Actualizar `README.md` cuando el cambio o la política del repositorio lo requiera.
-9. Ejecutar los tests y checks aplicables.
-10. Abrir o actualizar una Pull Request hacia `main`.
-11. Comprobar automáticamente los checks requeridos/aplicables al SHA actual de la Pull Request.
-12. Si un check requerido/aplicable falla o se cancela, no fusionar: investigar, corregir el fallo en la misma rama y Pull Request y volver automáticamente al paso 9. No esperar una orden del usuario para continuar.
-13. Cuando todos los checks requeridos/aplicables al SHA actual estén en verde, fusionar automáticamente la Pull Request sin solicitar autorización adicional. Los comentarios o revisiones meramente informativos de bots no bloquean el merge. Una protección de rama que GitHub marque explícitamente como bloqueante sí debe impedirlo.
-14. Después del merge, eliminar automáticamente únicamente la rama origen de esa Pull Request; nunca eliminar `main`.
-15. Verificar automáticamente que la rama origen ya no existe. Si la limpieza falla, investigar y corregir el mecanismo de cleanup dentro del mismo trabajo.
-16. El trabajo no se considera terminado hasta que la PR esté fusionada y se haya verificado la eliminación de su rama origen.
-17. Toda decisión de merge debe operar sobre el SHA actual de la PR para impedir fusionar una revisión obsoleta.
+## Prohibición absoluta de escritura directa en `main`
+
+**Ningún cambio puede escribirse, commitearse ni pushearse directamente a `main`.**
+
+Esto incluye cambios de código, documentación, configuración, workflows, dependencias, versionado, badges, hotfixes, reverts y cualquier otro archivo.
+
+Toda modificación debe seguir obligatoriamente este flujo:
+
+1. Leer `AGENTS.md` y reglas referenciadas.
+2. Partir del `main` actualizado.
+3. Crear una rama dedicada antes de modificar archivos.
+4. Determinar y aplicar el incremento SemVer sobre `revision`.
+5. Realizar el cambio exclusivamente en la rama.
+6. Actualizar `CHANGELOG.md` con la nueva versión funcional.
+7. Mantener `README.md`, `pom.xml` y documentación de versión sincronizados cuando corresponda.
+8. Ejecutar los tests y checks aplicables; como mínimo `mvn -B test`.
+9. Abrir o actualizar una Pull Request hacia `main`.
+10. Comprobar los checks requeridos sobre el SHA actual de la PR.
+11. Si falla o se cancela un check aplicable, investigar y corregir en la misma rama y PR, y repetir los tests/checks.
+12. Fusionar únicamente cuando todos los checks requeridos/aplicables al SHA actual estén en verde y GitHub no marque ninguna protección bloqueante.
+13. Eliminar únicamente la rama origen después del merge.
+14. Verificar que la rama origen ya no existe.
+
+El trabajo no se considera terminado hasta completar merge y limpieza.
 
 ## Versionado Maven CI-friendly
 
@@ -42,10 +51,10 @@ El ciclo obligatorio es:
 ```
 
 - `revision`: versión SemVer funcional.
-- `sha1`: `-<short-sha>`, generado por CI; en la build de `main` corresponde al commit resultante del merge; no modificar manualmente.
-- Los builds no productivos de `main` usan el formato `revision-shortSHA` (por ejemplo, `2.0.6-d47f1dfb`), donde `shortSHA` identifica el commit resultante del merge, sin añadir `-SNAPSHOT` por defecto.
+- `sha1`: `-<short-sha>`, generado por CI; no modificar manualmente.
 - `changelist`: vacío o `-SNAPSHOT`.
 - DEV, INT y QA deben promover el mismo artefacto y conservar la misma versión.
+- El `CHANGELOG.md` usa `revision`, nunca la versión de build con SHA.
 
 ## SemVer
 
@@ -53,15 +62,15 @@ El ciclo obligatorio es:
 - `minor`: `X.Y.Z` -> `X.(Y+1).0`
 - `major`: `X.Y.Z` -> `(X+1).0.0`
 
-El `CHANGELOG.md` usa `revision`, nunca la versión de build con SHA.
-
 ## Tests
 
 - Baseline Java: JDK 21.
 - Ejecutar como mínimo `mvn -B test`.
 - Añadir o actualizar tests para cambios funcionales o de configuración.
-- Revisar los tests en el mismo orden del flujo afectado: validación/entrada -> parsing/mapeo -> servicio/publicación -> consumer/integración. Cuando se introduzca o cambie una excepción propia, actualizar primero los tests unitarios que verifican su tipo, mensaje y causa; después ejecutar la suite completa.
+- Revisar tests siguiendo el flujo afectado: validación/entrada -> parsing/mapeo -> servicio/publicación -> consumer/integración.
 
-## Pull Requests
+## Pull Requests y seguridad operativa
 
-Antes de abrir o actualizar una PR comprobar que rama y SemVer fueron confirmados, `revision` es correcta, `sha1` no está persistido manualmente, `changelist` es coherente con la política CI-friendly (vacío o `-SNAPSHOT`) y la PR indica nivel SemVer y versión anterior/nueva. Tras abrir o actualizar la PR, continuar automáticamente el ciclo definido en «Flujo de trabajo automático» hasta merge y limpieza verificada de la rama.
+Toda decisión de merge debe operar sobre el SHA actual de la PR. Los comentarios informativos de bots no bloquean el merge; una protección de rama marcada por GitHub como bloqueante sí.
+
+Si una instrucción del usuario contradice explícitamente estas reglas, detener únicamente la operación incompatible y explicar el conflicto; no improvisar una escritura directa a `main`.
