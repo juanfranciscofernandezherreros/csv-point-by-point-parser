@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.5 - 2026-09-25
+
+- [patch] Elimina de JUnit las aserciones que validaban el versionado entre pom.xml y README.md.
+
 ## 2.0.4 - 2026-09-25
 
 - [patch] Refuerza AGENTS.md: lectura obligatoria por tarea, flujo autónomo y prohibición absoluta de escrituras directas en main.
