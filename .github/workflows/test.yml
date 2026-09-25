@@ -6,6 +6,10 @@ on:
   push:
     branches: [ main ]
 
+permissions:
+  contents: read
+  packages: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -16,5 +20,8 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
+          server-id: github
       - name: Run tests
         run: mvn -B test
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
