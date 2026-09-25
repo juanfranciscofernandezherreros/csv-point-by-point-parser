@@ -1,16 +1,30 @@
-# Repository Rules for OpenAI and AI Agents
+# AGENTS.md
 
-## Every non-merge commit
+Estas reglas son obligatorias para cualquier agente, asistente o automatización.
 
-1. Trabajar en una rama dedicada y no enviar cambios directamente a `main`.
-2. Hacer un único cambio lógico por commit.
-3. Incrementar la versión de `pom.xml` y sincronizar `README.md` y `CHANGELOG.md`.
-4. Añadir o actualizar pruebas JUnit.
-5. Ejecutar `mvn -B test` con JDK 21.
-6. Incluir la versión en el mensaje de commit.
-7. Abrir Pull Request hacia `main`; fusionar solo con `documentation-policy` y `test` en verde.
-8. Eliminar la rama origen después del merge.
+## Confirmación obligatoria antes de empezar
+Antes de cualquier cambio, preguntar y esperar confirmación explícita de:
+1. **Nombre de la rama**, proponiendo uno por defecto.
+2. **Tipo SemVer**: `major`, `minor` o `patch`.
 
-## Baseline
+No modificar archivos, crear commits ni abrir PR hasta tener ambas respuestas.
 
-JDK 21. El parser publica contratos Avro en Kafka y no debe incorporar PostgreSQL, JPA ni Flyway.
+## Flujo obligatorio
+Partir de `main` actualizado; crear rama dedicada; nunca trabajar directamente sobre `main`; aplicar el incremento sobre `revision`; actualizar CHANGELOG y README cuando corresponda; ejecutar tests/checks; abrir PR; no fusionar sin autorización explícita; con merge automático autorizado, fusionar solo con checks verdes.
+
+## Maven CI-friendly
+`<version>${revision}${sha1}${changelist}</version>`
+- `revision`: SemVer funcional.
+- `sha1`: `-<short-sha>` generado por CI; no persistir manualmente.
+- `changelist`: vacío o `-SNAPSHOT`.
+- DEV, INT y QA promocionan exactamente el mismo artefacto.
+
+## SemVer
+- patch: `X.Y.Z -> X.Y.(Z+1)`
+- minor: `X.Y.Z -> X.(Y+1).0`
+- major: `X.Y.Z -> (X+1).0.0`
+
+El CHANGELOG usa `revision`, nunca el SHA de build.
+
+## Tests
+Baseline JDK 21. Ejecutar como mínimo `mvn -B test`.
