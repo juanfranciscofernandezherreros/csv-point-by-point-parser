@@ -2,7 +2,7 @@
 
 ## 2.0.7 - 2026-09-25
 
-- [patch] KAN-84 sustituye los schemas locales FileEvent/PointByPoint por `basketball-event-contracts:1.0.2`.
+- [patch] KAN-84 sustituye los schemas locales FileEvent/PointByPoint por `basketball-event-contracts:1.1.0`, que incorpora `FileEventValue.expectedRows` opcional.
 - [patch] Elimina generación Avro local y configura Maven/CI con lectura autenticada de GitHub Packages.
 - [patch] Mantiene los namespaces, campos y protocolo START/ROW/COMPLETED/FAILED existentes.
 
