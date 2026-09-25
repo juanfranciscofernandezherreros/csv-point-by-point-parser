@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.6 - 2026-09-25
+
+- [patch] KAN-70 valida POINT_BY_POINT contra `CSV_ALLOWED_ROOT` antes de cualquier lectura.
+- [patch] Resuelve rutas reales para bloquear traversal y escapes mediante symlink.
+- [patch] Añade tests de ruta permitida, traversal, fichero inexistente y symlink fuera de raíz.
+
 ## 2.0.5 - 2026-09-25
 
 - [patch] Elimina de JUnit las aserciones que validaban el versionado entre pom.xml y README.md.

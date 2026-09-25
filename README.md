@@ -1,4 +1,4 @@
-![version](https://img.shields.io/badge/version-2.0.5-blue)
+![version](https://img.shields.io/badge/version-2.0.6-blue)
 # csv-point-by-point-parser
 
 Parser separado de `csv-point-by-point`.
@@ -11,4 +11,6 @@ El parser conserva las reglas del micro original: UTF-8/BOM, 13 columnas de dato
 
 Antes de publicar ninguna fila hace una pasada completa de validación. Después publica todos los mensajes con la misma key Avro `sourceEventId`, preservando el orden por partición. No usa JPA, Flyway ni PostgreSQL.
 
-Variables: `KAFKA_BOOTSTRAP_SERVERS`, `KAFKA_SCHEMA_REGISTRY_URL`, `KAFKA_FILE_READY_TOPIC`, `KAFKA_PARSED_POINT_BY_POINT_TOPIC`.
+Variables: `KAFKA_BOOTSTRAP_SERVERS`, `KAFKA_SCHEMA_REGISTRY_URL`, `KAFKA_FILE_READY_TOPIC`, `KAFKA_PARSED_POINT_BY_POINT_TOPIC`, `CSV_ALLOWED_ROOT`.
+
+Antes de abrir el fichero, la ruta absoluta se resuelve con `toRealPath()` y debe permanecer dentro de `CSV_ALLOWED_ROOT` (por defecto `/data/csv`). Esto bloquea traversal y symlinks que escapen de la raíz permitida.
