@@ -6,10 +6,6 @@ on:
   push:
     branches: [ main ]
 
-permissions:
-  contents: write
-  pull-requests: write
-
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -20,33 +16,5 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
-      - run: mvn -B test
-
-  auto-merge:
-    if: github.event_name == 'pull_request' && github.event.pull_request.draft == false
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Merge PR and delete source branch
-        uses: actions/github-script@v9
-        with:
-          script: |
-            const pr = context.payload.pull_request;
-            await github.rest.pulls.merge({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: pr.number,
-              merge_method: 'merge',
-              sha: pr.head.sha
-            });
-            if (pr.head.repo.full_name === context.payload.repository.full_name && pr.head.ref !== 'main') {
-              try {
-                await github.rest.git.deleteRef({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  ref: `heads/${pr.head.ref}`
-                });
-              } catch (error) {
-                if (error.status !== 404 && error.status !== 422) throw error;
-              }
-            }
+      - name: Run tests
+        run: mvn -B test

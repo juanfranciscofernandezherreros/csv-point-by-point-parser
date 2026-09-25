@@ -1,0 +1,105 @@
+name: auto-merge
+
+on:
+  workflow_run:
+    workflows:
+      - test
+      - documentation-policy
+      - CI-friendly non-production version
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: write
+  pull-requests: write
+
+jobs:
+  merge-green-pr:
+    if: ${{ github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Merge when every Actions run for the current PR head is green
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const headSha = context.payload.workflow_run.head_sha;
+
+            const prs = await github.paginate(github.rest.pulls.list, {
+              owner,
+              repo,
+              state: 'open',
+              head: `${owner}:${context.payload.workflow_run.head_branch}`,
+              per_page: 100
+            });
+
+            const pr = prs.find(candidate => candidate.head.sha === headSha && !candidate.draft);
+            if (!pr) {
+              core.info('No open non-draft PR matches the completed workflow head SHA.');
+              return;
+            }
+
+            const runs = await github.paginate(github.rest.actions.listWorkflowRunsForRepo, {
+              owner,
+              repo,
+              head_sha: headSha,
+              event: 'pull_request',
+              per_page: 100
+            });
+
+            const relevantRuns = runs.filter(run => run.name !== 'auto-merge');
+            const unfinished = relevantRuns.filter(run => run.status !== 'completed');
+            const unsuccessful = relevantRuns.filter(run => run.status === 'completed' && run.conclusion !== 'success');
+
+            if (unfinished.length > 0) {
+              core.info(`Waiting for: ${unfinished.map(run => run.name).join(', ')}`);
+              return;
+            }
+
+            if (unsuccessful.length > 0) {
+              core.setFailed(`Blocking checks: ${unsuccessful.map(run => `${run.name}=${run.conclusion}`).join(', ')}`);
+              return;
+            }
+
+            const result = await github.rest.pulls.merge({
+              owner,
+              repo,
+              pull_number: pr.number,
+              merge_method: 'merge',
+              sha: headSha
+            });
+
+            if (!result.data.merged) {
+              core.setFailed(result.data.message || 'GitHub did not merge the pull request.');
+              return;
+            }
+
+            core.info(`Merged PR #${pr.number} at ${result.data.sha}`);
+
+            if (pr.head.repo.full_name !== `${owner}/${repo}` || pr.head.ref === 'main') {
+              core.info('Head branch is external or main; skipping branch deletion.');
+              return;
+            }
+
+            const ref = `heads/${pr.head.ref}`;
+            await github.rest.git.deleteRef({
+              owner,
+              repo,
+              ref
+            });
+            core.info(`Deleted merged head branch ${ref}`);
+
+            try {
+              await github.rest.git.getRef({
+                owner,
+                repo,
+                ref
+              });
+              core.setFailed(`Branch ${ref} still exists after deletion.`);
+            } catch (error) {
+              if (error.status !== 404) {
+                throw error;
+              }
+              core.info(`Verified branch ${ref} no longer exists.`);
+            }

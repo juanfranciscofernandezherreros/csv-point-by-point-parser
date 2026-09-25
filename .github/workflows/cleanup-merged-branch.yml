@@ -24,9 +24,16 @@ jobs:
           script: |
             const ref = `heads/${process.env.HEAD_REF}`;
             try {
-              await github.rest.git.deleteRef({ owner: context.repo.owner, repo: context.repo.repo, ref });
+              await github.rest.git.deleteRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref
+              });
               core.info(`Deleted ${ref}`);
             } catch (error) {
-              if (error.status === 404 || error.status === 422) return;
+              if (error.status === 404) {
+                core.info(`Branch ${ref} is already absent; nothing to do.`);
+                return;
+              }
               throw error;
             }
