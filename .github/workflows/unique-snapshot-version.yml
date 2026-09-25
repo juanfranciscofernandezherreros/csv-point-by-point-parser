@@ -1,4 +1,4 @@
-name: Unique snapshot version
+name: Unique non-production version
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  snapshot-version:
+  nonprod-version:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -23,23 +23,29 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Generate unique Maven snapshot version
+      - name: Generate immutable non-production Maven version
         id: version
         shell: bash
         run: |
           set -euo pipefail
-          base_version="$(mvn -q -DforceStdout help:evaluate -Dexpression=project.version)"
-          base_version="${base_version%-SNAPSHOT}"
+
+          project_version="$(mvn -q -DforceStdout help:evaluate -Dexpression=project.version)"
           short_sha="${GITHUB_SHA::8}"
-          snapshot_version="${base_version}-${short_sha}-SNAPSHOT"
+
+          if [[ "${project_version}" == *-SNAPSHOT ]]; then
+            base_version="${project_version%-SNAPSHOT}"
+            build_version="${base_version}-${short_sha}-SNAPSHOT"
+          else
+            build_version="${project_version}-${short_sha}"
+          fi
 
           mvn -B org.codehaus.mojo:versions-maven-plugin:2.18.0:set \
-            -DnewVersion="${snapshot_version}" \
+            -DnewVersion="${build_version}" \
             -DgenerateBackupPoms=false
 
-          echo "snapshot_version=${snapshot_version}" >> "${GITHUB_OUTPUT}"
-          echo "### Snapshot version" >> "${GITHUB_STEP_SUMMARY}"
-          echo "\`${snapshot_version}\`" >> "${GITHUB_STEP_SUMMARY}"
+          echo "build_version=${build_version}" >> "${GITHUB_OUTPUT}"
+          echo "### Non-production version" >> "${GITHUB_STEP_SUMMARY}"
+          echo "\`${build_version}\`" >> "${GITHUB_STEP_SUMMARY}"
 
-      - name: Verify snapshot build
+      - name: Verify non-production build
         run: mvn -B test
