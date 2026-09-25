@@ -8,11 +8,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
-      - name: Require synchronized release files
+      - name: Validate documentation only when revision changes
         shell: bash
         run: |
-          changed="$(git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}")"
+          set -euo pipefail
+          base_sha="${{ github.event.pull_request.base.sha }}"
+          head_sha="${{ github.event.pull_request.head.sha }}"
+          old_revision="$(git show "${base_sha}:pom.xml" | sed -n 's:.*<revision>\([^<]*\)</revision>.*:\1:p' | head -1)"
+          new_revision="$(sed -n 's:.*<revision>\([^<]*\)</revision>.*:\1:p' pom.xml | head -1)"
+          if [[ -z "${old_revision}" || -z "${new_revision}" ]]; then
+            echo "ERROR: pom.xml must define the CI-friendly <revision> property."
+            exit 1
+          fi
+          if [[ "${old_revision}" == "${new_revision}" ]]; then
+            echo "revision unchanged (${new_revision}); synchronized release files are not required."
+            exit 0
+          fi
+          changed="$(git diff --name-only "${base_sha}" "${head_sha}")"
           for file in pom.xml README.md CHANGELOG.md; do
-            grep -qx "$file" <<< "$changed" || { echo "$file must change"; exit 1; }
+            grep -qx "${file}" <<< "${changed}" || { echo "ERROR: ${file} must change when revision changes."; exit 1; }
           done
+          grep -F "${new_revision}" README.md >/dev/null || { echo "ERROR: README.md must document revision ${new_revision}."; exit 1; }
+          grep -Eq "^##[[:space:]]+${new_revision}([[:space:]-]|$)" CHANGELOG.md || { echo "ERROR: CHANGELOG.md must contain a section for revision ${new_revision}."; exit 1; }
