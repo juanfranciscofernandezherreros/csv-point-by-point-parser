@@ -1,5 +1,4 @@
-Current version: **2.0.3**
-
+![version](https://img.shields.io/badge/version-2.0.3-blue)
 # csv-point-by-point-parser
 
 Parser separado de `csv-point-by-point`.
