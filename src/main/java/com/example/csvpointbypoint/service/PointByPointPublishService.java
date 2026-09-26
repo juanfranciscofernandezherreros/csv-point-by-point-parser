@@ -2,6 +2,7 @@ package com.example.csvpointbypoint.service;
 
 import com.example.csvpointbypoint.avro.PointByPointKey;
 import com.example.csvpointbypoint.avro.PointByPointValue;
+import com.example.csvpointbypoint.error.NonRetryableCsvException;
 import com.example.csvpointbypoint.mapper.PointByPointMessageMapper;
 import com.example.csvpointbypoint.parser.PointByPointCsvParser;
 import com.example.csvpointbypoint.validation.SafeCsvPathValidator;
@@ -67,7 +68,13 @@ public class PointByPointPublishService {
             } catch (Exception ignored) {
                 // Preserve the original parsing/validation failure if reporting it also fails.
             }
-            throw new IllegalStateException("Unable to parse POINT_BY_POINT CSV: " + filePath, exception);
+            if (containsKafkaFailure(exception)) {
+                if (exception instanceof RuntimeException runtimeException) {
+                    throw runtimeException;
+                }
+                throw new RuntimeException(exception);
+            }
+            throw new NonRetryableCsvException("Unable to parse POINT_BY_POINT CSV: " + filePath, exception);
         }
     }
 
@@ -88,6 +95,18 @@ public class PointByPointPublishService {
 
     private void send(PointByPointKey key, PointByPointValue value) {
         kafka.send(topic, key, value).join();
+    }
+
+    private boolean containsKafkaFailure(Throwable error) {
+        Throwable current = error;
+        while (current != null) {
+            if (current instanceof org.springframework.kafka.KafkaException
+                    || current instanceof org.apache.kafka.common.KafkaException) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
     private record Validation(long rows, String matchId) {}
