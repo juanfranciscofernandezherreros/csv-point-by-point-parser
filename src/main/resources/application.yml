@@ -21,3 +21,7 @@ app:
     topics:
       file-ready: ${KAFKA_FILE_READY_TOPIC:file.ready.point-by-point}
       parsed-point-by-point: ${KAFKA_PARSED_POINT_BY_POINT_TOPIC:point-by-point.parsed}
+      dlt: ${KAFKA_POINT_BY_POINT_PARSER_DLT_TOPIC:file.ready.point-by-point.DLT}
+    error:
+      max-attempts: ${KAFKA_RETRY_MAX_ATTEMPTS:3}
+      backoff-ms: ${KAFKA_RETRY_BACKOFF_MS:1000}
