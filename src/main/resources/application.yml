@@ -6,8 +6,11 @@ spring:
     consumer:
       group-id: ${KAFKA_CONSUMER_GROUP_ID:csv-point-by-point-parser}
       auto-offset-reset: ${KAFKA_AUTO_OFFSET_RESET:earliest}
-      key-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
-      value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.key.delegate.class: io.confluent.kafka.serializers.KafkaAvroDeserializer
+        spring.deserializer.value.delegate.class: io.confluent.kafka.serializers.KafkaAvroDeserializer
     producer:
       key-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
       value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer

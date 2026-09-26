@@ -1,4 +1,4 @@
-![version](https://img.shields.io/badge/version-2.1.0-blue)
+![version](https://img.shields.io/badge/version-2.1.1-blue)
 # csv-point-by-point-parser
 
 Parser separado de `csv-point-by-point`.
@@ -38,4 +38,4 @@ KAN-110 aplica la política de KAN-18 al consumo de `file.ready.point-by-point`.
 - `KAFKA_RETRY_BACKOFF_MS`: backoff fijo, default `1000`;
 - `KAFKA_POINT_BY_POINT_PARSER_DLT_TOPIC`: topic DLT configurable.
 
-La DLT conserva el evento de entrada y los headers de diagnóstico de Spring Kafka.
+El consumer usa `ErrorHandlingDeserializer` para que un Avro corrupto entre en el flujo normal de recuperación. La DLT acepta objetos Avro y los `byte[]` originales, deja que Kafka seleccione una partición válida, conserva los headers de excepción de Spring Kafka y hace visible cualquier fallo al publicar en DLT.
