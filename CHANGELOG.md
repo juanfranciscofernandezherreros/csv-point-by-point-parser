@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.1.0 - 2026-09-26
+
+- [minor] KAN-110 aplica la estrategia común de errores Kafka de KAN-18.
+- [minor] Separa errores permanentes de CSV/ruta de fallos transitorios de Kafka sin eliminar el evento FAILED existente.
+- [minor] Configura retries/backoff y DLT `file.ready.point-by-point.DLT`.
+- [minor] Añade tests de clasificación de error permanente y transitorio.
+
+
 ## 2.0.7 - 2026-09-25
 
 - [patch] KAN-84 sustituye los schemas locales FileEvent/PointByPoint por `basketball-event-contracts:1.1.0`, que incorpora `FileEventValue.expectedRows` opcional.
