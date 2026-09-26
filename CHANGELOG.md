@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.2.0 - 2026-09-26
+
+- [minor] KAN-57 elimina `send(...).join()` por cada ROW y publica cada chunk de hasta 500 mensajes de forma asíncrona.
+- [minor] Espera las confirmaciones del chunk mediante `CompletableFuture.allOf(...)` antes de continuar.
+- [minor] Mantiene START antes de las ROW y COMPLETED únicamente después de confirmar todas las filas.
+- [minor] Añade tests que demuestran que una ROW pendiente no bloquea el envío de las siguientes del mismo chunk y que un fallo impide COMPLETED.
+
 ## 2.1.1 - 2026-09-26
 
 - [patch] KAN-110 captura fallos de deserialización Avro mediante `ErrorHandlingDeserializer`.
