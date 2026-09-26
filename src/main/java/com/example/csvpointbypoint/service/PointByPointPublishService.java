@@ -11,6 +11,9 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.Path;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -49,13 +52,15 @@ public class PointByPointPublishService {
                 throw new IllegalStateException("CSV has " + expectedRows + " rows; expected " + expectedRowsHint);
             }
 
-            send(key, mapper.control(eventId, "START", filePath, expectedRows, validation.matchId(), null));
+            sendAndAwait(key, mapper.control(
+                    eventId, "START", filePath, expectedRows, validation.matchId(), null));
 
             AtomicLong rowNumber = new AtomicLong();
-            parser.parseInChunks(path, CHUNK_SIZE, rows -> rows.forEach(row ->
-                    send(key, mapper.row(eventId, filePath, expectedRows, rowNumber.incrementAndGet(), row))));
+            parser.parseInChunks(path, CHUNK_SIZE, rows ->
+                    sendChunk(key, eventId, filePath, expectedRows, rowNumber, rows));
 
-            send(key, mapper.control(eventId, "COMPLETED", filePath, expectedRows, validation.matchId(), null));
+            sendAndAwait(key, mapper.control(
+                    eventId, "COMPLETED", filePath, expectedRows, validation.matchId(), null));
         } catch (Exception exception) {
             String message = exception.getMessage() == null
                     ? exception.getClass().getSimpleName()
@@ -64,7 +69,7 @@ public class PointByPointPublishService {
                     ? Math.max(0L, expectedRowsHint == null ? 0L : expectedRowsHint)
                     : validatedExpectedRows;
             try {
-                send(key, mapper.control(eventId, "FAILED", filePath, safeExpected, null, message));
+                sendAndAwait(key, mapper.control(eventId, "FAILED", filePath, safeExpected, null, message));
             } catch (Exception ignored) {
                 // Preserve the original parsing/validation failure if reporting it also fails.
             }
@@ -75,6 +80,34 @@ public class PointByPointPublishService {
                 throw new RuntimeException(exception);
             }
             throw new NonRetryableCsvException("Unable to parse POINT_BY_POINT CSV: " + filePath, exception);
+        }
+    }
+
+    private void sendChunk(PointByPointKey key,
+                           String eventId,
+                           String filePath,
+                           long expectedRows,
+                           AtomicLong rowNumber,
+                           List<com.example.csvpointbypoint.dto.PointByPointEventDTO> rows) {
+        CompletableFuture<?>[] sends = rows.stream()
+                .map(row -> kafka.send(
+                        topic,
+                        key,
+                        mapper.row(eventId, filePath, expectedRows, rowNumber.incrementAndGet(), row)))
+                .toArray(CompletableFuture[]::new);
+
+        awaitAll(sends);
+    }
+
+    private void sendAndAwait(PointByPointKey key, PointByPointValue value) {
+        awaitAll(kafka.send(topic, key, value));
+    }
+
+    private void awaitAll(CompletableFuture<?>... sends) {
+        try {
+            CompletableFuture.allOf(sends).join();
+        } catch (CompletionException exception) {
+            throw exception;
         }
     }
 
@@ -91,10 +124,6 @@ public class PointByPointPublishService {
             rows.addAndGet(chunk.size());
         });
         return new Validation(rows.get(), matchId.get());
-    }
-
-    private void send(PointByPointKey key, PointByPointValue value) {
-        kafka.send(topic, key, value).join();
     }
 
     private boolean containsKafkaFailure(Throwable error) {
